@@ -1,21 +1,21 @@
-#include <unistd.h>
-#include <fcntl.h>
-#include <iostream>
-
 /*
  * The tee command reads its standard input until end-of-file, writing a copy of the input
-to standard output and to the file named in its command-line argument. (We show
-an example of the use of this command when we discuss FIFOs in Section 44.7.)
-Implement tee using I/O system calls. By default, tee overwrites any existing file with
-the given name. Implement the –a command-line option (tee –a file), which causes tee
-to append text to the end of a file if it already exists. (Refer to Appendix B for a
-description of the getopt() function, which can be used to parse command-line
-options.)
- */
+ * to standard output and to the file named in its command-line argument. (We show
+ * an example of the use of this command when we discuss FIFOs in Section 44.7.)
+ * Implement tee using I/O system calls. By default, tee overwrites any existing file with
+ * the given name. Implement the –a command-line option (tee –a file), which causes tee
+ * to append text to the end of a file if it already exists. (Refer to Appendix B for a
+ * description of the getopt() function, which can be used to parse command-line
+ * options.)
+*/
+
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdio.h>
 
 int exercise_4_1(int argc, char* argv[]) {
     if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " [-a] file" << std::endl;
+        fprintf(stderr, "Usage: %s [-a] file\n", argv[0]);
         return 1;
     }
 
@@ -27,7 +27,7 @@ int exercise_4_1(int argc, char* argv[]) {
                 is_append_mode = true;
                 break;
             case '?':
-                std::cerr << "Usage: " << argv[0] << " [-a] file" << std::endl;
+                fprintf(stderr, "Usage: %s [-a] file\n", argv[0]);
                 return 1;
         }
     }
