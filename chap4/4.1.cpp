@@ -19,16 +19,15 @@ int exercise_4_1(int argc, char* argv[]) {
         return 1;
     }
 
-    bool is_append_mode = false;
+    int is_append_mode = 0;
     int option;
-    while ((option = getopt(argc, argv, "a")) != -1) {
-        switch (option) {
-            case 'a':
-                is_append_mode = true;
-                break;
-            case '?':
-                fprintf(stderr, "Usage: %s [-a] file\n", argv[0]);
-                return 1;
+
+    if ((option = getopt(argc, argv, "a")) != -1) {
+        if (option == 'a')
+            is_append_mode = 1;
+        else {
+            fprintf(stderr, "Usage: %s [-a] file\n", argv[0]);
+            return 1;
         }
     }
 
