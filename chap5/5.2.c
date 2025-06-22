@@ -44,3 +44,7 @@ int exercise_5_2(char* filename) {
     close(fd);
     return 0;
 }
+
+/*
+ * RESULT: If the file is opened in APPEND_MODE, irrespective of lseek, when write occurs, the pointer is moved to end of file.
+ */
