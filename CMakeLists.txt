@@ -6,4 +6,5 @@ add_executable(
         main.c
         chap4/4.1.c
         chap4/4.2.c
+        chap5/5.2.c
 )
