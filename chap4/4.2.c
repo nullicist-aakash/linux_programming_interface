@@ -7,28 +7,26 @@
 // dd if=/dev/urandom of=sparsefile.img bs=1M count=1         # Write first 1 MB of real data
 // dd if=/dev/urandom of=sparsefile.img bs=1M count=1 seek=1025 conv=notrunc  # Write another 1 MB, after 1 GB hole
 
-#include <cstdio>
+#include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <cstdlib>
-#include <cstring>
+#include <stdlib.h>
+#include <string.h>
 
-namespace {
-    off_t Lseek(const int& fd, const off_t& offset, const int& whence) {
-        off_t val;
-        if ((val = lseek(fd, offset, whence)) == -1) {
-            perror("lseek");
-            exit(1);
-        }
-        return val;
+off_t Lseek(int fd, off_t offset, int whence) {
+    off_t val;
+    if ((val = lseek(fd, offset, whence)) == -1) {
+        perror("lseek");
+        exit(1);
     }
+    return val;
+}
 
-    bool all_zero(char* buff, auto count) {
-        if (count == 0)
-            return true;
+bool all_zero(char* buff, ssize_t count) {
+    if (count == 0)
+        return true;
 
-        return buff[0] == '\0' && memcmp(buff, buff + 1, count - 1) == 0;
-    }
+    return buff[0] == '\0' && memcmp(buff, buff + 1, count - 1) == 0;
 }
 
 int exercise_4_2(int argc, char* argv[]) {
@@ -50,7 +48,7 @@ int exercise_4_2(int argc, char* argv[]) {
     }
 
     char BUFF[1024];
-    decltype(read(0, BUFF, 0)) read_size;
+    ssize_t read_size;
 
     long long skip_write_buff = 0;
     while ((read_size = read(read_fd, BUFF, sizeof BUFF)) > 0) {

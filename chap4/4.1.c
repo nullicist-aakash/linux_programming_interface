@@ -13,7 +13,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 
-int exercise_4_1(int argc, char* argv[]) {
+int exercise_4_1(int argc, char** argv) {
     if (argc < 2) {
         fprintf(stderr, "Usage: %s [-a] file\n", argv[0]);
         return 1;
