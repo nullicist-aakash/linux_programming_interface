@@ -10,4 +10,5 @@ add_executable(
         chap5/5.3.c
         chap5/5.4.c
         chap5/5.7.c
+        chap6/6.2.c
 )
