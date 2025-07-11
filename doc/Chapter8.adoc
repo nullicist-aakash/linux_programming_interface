@@ -1,0 +1,285 @@
+= Chapter 8: Users and Groups
+Aakash Gupta <uchanahome8@gmail.com>
+:toc:
+
+* Each file belongs to a particular user and group.
+* Each process has a number of user and group IDs that determine who owns the process and what permissions it has when accessing a file.
+
+== 8.1 The Password File: `/etc/passwd`
+
+****
+[source,bash]
+----
+mtk:x:1000:100:Michael Kerrisk:/home/mtk:/bin/bash
+
+# login_name:encrypted_password:user_id:group_id:comment:home_directory:login_shell
+----
+****
+
+* *Login name*: This is the unique name that the user must enter in order to log in.
+* *Encrypted password*: This field contains a 13-character encrypted password.
+** Note, however, that this field is ignored if shadow passwords have been enabled.
+** In this case, the password field in `/etc/passwd` conventionally contains the letter `x` (although any nonempty character string may appear), and the encrypted password is instead stored in the shadow password file.
+
+== 8.2 The Shadow Password File: `/etc/shadow`
+
+== 8.3 The Group File: `/etc/group`
+
+The group file, `/etc/group`, contains one line for each group in the system. Each line consists of four colon-separated fields, as in the following examples:
+
+****
+[source,bash]
+----
+users:x:100:
+
+jambit:x:106:claus,felli,frank,harti,markus,martin,mtk,paul
+
+# group_name:encrypted_password:group_id:user_list
+----
+****
+
+To record that the user `avr` is a member of the groups `users`, `staff`, and `teach`, we would see the following record in the password file:
+
+****
+[source,bash]
+----
+avr:x:1001:100:Anthony Robins:/home/avr:/bin/bash
+----
+****
+
+And the following records would appear in the group file:
+
+****
+[source,bash]
+----
+users:x:100:
+staff:x:101:mtk,avr,martinl
+teach:x:104:avr,rlb,alc
+----
+****
+
+NOTE: The fourth field of the password record, containing the group ID 100, specifies membership of the group `users`.
+
+== 8.4 Retrieving User and Group Information
+=== 8.4.1 Retrieving records from the password file
+****
+[source,c]
+----
+#include <pwd.h>
+
+struct passwd {
+    char *pw_name;      /* Login name (username) */
+    char *pw_passwd;    /* Encrypted password */
+    uid_t pw_uid;       /* User ID */
+    gid_t pw_gid;       /* Group ID */
+    char *pw_gecos;     /* Comment (user information) */
+    char *pw_dir;       /* Initial working (home) directory */
+    char *pw_shell;     /* Login shell */
+};
+
+struct passwd *getpwnam(const char *name);
+struct passwd *getpwuid(uid_t uid);
+----
+****
+
+* The `pw_passwd` field contains valid information only if password shadowing is not enabled.
+* Both `getpwnam()` and `getpwuid()` return a pointer to a statically allocated structure.
+
+NOTE: Programmatically, the simplest way to determine whether password shadowing is enabled is to follow a
+successful `getpwnam()` call with a call to `getspnam()`, described shortly, to see if it
+returns a shadow password record for the same username.
+
+* If a matching passwd record can’t be found, then `getpwnam()` and `getpwuid()` should return `NULL` and leave `errno` unchanged.
+****
+[source,c]
+----
+struct passwd *pwd;
+
+errno = 0;
+pwd = getpwnam(name);
+
+if (pwd == NULL) {
+    if (errno == 0)
+        /* Not found */;
+    else
+        /* Error */;
+}
+----
+****
+
+=== 8.4.2 Retrieving records from the group file
+****
+[source,c]
+----
+#include <grp.h>
+
+struct group {
+    char *gr_name;      /* Group name */
+    char *gr_passwd;    /* Encrypted password (if not password shadowing) */
+    gid_t gr_gid;       /* Group ID */
+    char **gr_mem;      /* NULL-terminated array of pointers to names of members listed in /etc/group */
+};
+
+struct group *getgrnam(const char *name);
+
+struct group *getgrgid(gid_t gid);
+----
+****
+
+=== 8.4.3 Scanning all records in the password and group files
+The `setpwent()`, `getpwent()`, and `endpwent()` functions are used to perform sequential scans of the records in the password file.
+
+****
+[source,c]
+----
+#include <pwd.h>
+
+// Returns records from the password file one by one, returning NULL when there are no more records.
+// On the first call, automatically opens the password file.
+struct passwd *getpwent(void); // getgrent() for group
+
+// If we are part-way through the file, we can use the setpwent() function to restart from the
+// beginning.
+void setpwent(void);            // setgrent() for group
+
+// When we have finished with the file, we call endpwent() to close it.
+void endpwent(void);            // endgrent() for group
+
+struct passwd *pwd;
+
+while ((pwd = getpwent()) != NULL)
+    printf("%-8s %5ld\n", pwd->pw_name, (long) pwd->pw_uid);
+
+endpwent();
+----
+****
+
+=== 8.4.4 Retrieving records from the shadow password file
+****
+[source,c]
+----
+#include <shadow.h>
+
+struct spwd {
+    char *sp_namp;     /* Login name */
+    char *sp_pwdp;     /* Encrypted password */
+    long  sp_lstchg;   /* Date of last change
+                         (measured in days since
+                         1970-01-01 00:00:00 +0000 (UTC)) */
+    long  sp_min;      /* Min # of days between changes */
+    long  sp_max;      /* Max # of days between changes */
+    long  sp_warn;     /* # of days before password expires
+                         to warn user to change it */
+    long  sp_inact;    /* # of days after password expires
+                         until account is disabled */
+    long  sp_expire;   /* Date when account expires
+                         (measured in days since
+                         1970-01-01 00:00:00 +0000 (UTC)) */
+    unsigned long sp_flag;  /* Reserved */
+};
+
+struct spwd *getspnam(const char *name);
+
+struct spwd *getspent(void);
+
+void setspent(void);
+
+void endspent(void);
+----
+****
+
+
+== 8.5 Password Encryption and User Authentication
+****
+[source,c]
+----
+#define _XOPEN_SOURCE
+#include <unistd.h>
+
+char *crypt(const char *key, const char *salt);
+
+...
+
+#define _BSD_SOURCE
+#include <unistd.h>
+
+char *getpass(const char *prompt);
+
+...
+
+#define _BSD_SOURCE /* Get getpass() declaration from <unistd.h> */
+#define _XOPEN_SOURCE /* Get crypt() declaration from <unistd.h> */
+#include <unistd.h>
+#include <limits.h>
+#include <pwd.h>
+#include <shadow.h>
+
+int main(int argc, char *argv[])
+{
+    char *username, *password, *encrypted, *p;
+    struct passwd *pwd;
+    struct spwd *spwd;
+    Boolean authOk;
+    size_t len;
+    long lnmax;
+
+    lnmax = sysconf(_SC_LOGIN_NAME_MAX);
+    if (lnmax == -1)  /* If limit is indeterminate */
+        lnmax = 256;  /* make a guess */
+
+    username = malloc(lnmax);
+    if (username == NULL)
+        errExit("malloc");
+
+    printf("Username: ");
+    fflush(stdout);
+    if (fgets(username, lnmax, stdin) == NULL)
+        exit(EXIT_FAILURE); /* Exit on EOF */
+
+    len = strlen(username);
+    if (username[len - 1] == '\n')
+        username[len - 1] = '\0'; /* Remove trailing '\n' */
+
+    pwd = getpwnam(username);
+    if (pwd == NULL)
+        fatal("couldn't get password record");
+    spwd = getspnam(username);
+    if (spwd == NULL && errno == EACCES)
+        fatal("no permission to read shadow password file");
+
+    if (spwd != NULL)                   /* If there is a shadow password record */
+        pwd->pw_passwd = spwd->sp_pwdp; /* Use the shadow password */
+
+    password = getpass("Password: ");
+
+    /* Encrypt password and erase cleartext version immediately */
+
+    encrypted = crypt(password, pwd->pw_passwd);
+    for (p = password; *p != '\0'; )
+        *p++ = '\0';
+
+    if (encrypted == NULL)
+        errExit("crypt");
+
+    authOk = strcmp(encrypted, pwd->pw_passwd) == 0;
+    if (!authOk) {
+        printf("Incorrect password\n");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Successfully authenticated: UID=%ld\n", (long) pwd->pw_uid);
+
+    /* Now do authenticated work... */
+
+    exit(EXIT_SUCCESS);
+}
+----
+****
+
+== Questions
+****
+[source,c]
+----
+include::../chap8/8.2.cpp[]
+----
+****

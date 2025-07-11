@@ -7,11 +7,11 @@
 // dd if=/dev/urandom of=sparsefile.img bs=1M count=1         # Write first 1 MB of real data
 // dd if=/dev/urandom of=sparsefile.img bs=1M count=1 seek=1025 conv=notrunc  # Write another 1 MB, after 1 GB hole
 
-#include <stdio.h>
+#include <cstdio>
 #include <fcntl.h>
 #include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 
 off_t Lseek(int fd, off_t offset, int whence) {
     off_t val;

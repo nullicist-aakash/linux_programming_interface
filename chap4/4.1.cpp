@@ -11,7 +11,7 @@
 
 #include <unistd.h>
 #include <fcntl.h>
-#include <stdio.h>
+#include <cstdio>
 
 int exercise_4_1(int argc, char** argv) {
     if (argc < 2) {
@@ -20,9 +20,8 @@ int exercise_4_1(int argc, char** argv) {
     }
 
     int is_append_mode = 0;
-    int option;
 
-    if ((option = getopt(argc, argv, "a")) != -1) {
+    if (int option; (option = getopt(argc, argv, "a")) != -1) {
         if (option == 'a')
             is_append_mode = 1;
         else {

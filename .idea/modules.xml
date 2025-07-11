@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/linux_programming_interface.iml" filepath="$PROJECT_DIR$/.idea/linux_programming_interface.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/linux_programming_interface2.iml" filepath="$PROJECT_DIR$/.idea/linux_programming_interface2.iml" />
     </modules>
   </component>
 </project>

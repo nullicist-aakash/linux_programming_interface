@@ -1,0 +1,113 @@
+= Chapter 6: Processes
+Aakash Gupta <uchanahome8@gmail.com>
+:toc:
+
+== 6.1 Processes and Programs
+
+== 6.2 Process ID and Parent Process ID
+****
+[source,c]
+----
+#include <unistd.h>
+
+pid_t getpid(void);
+
+pid_t getppid(void);
+----
+****
+
+
+== 6.3 Memory Layout of a Process
+
+== 6.4 Virtual Memory Management
+
+== 6.5 The Stack and Stack Frames
+
+== 6.6 Command-Line Arguments (`argc`, `argv`)
+
+== 6.7 Environment List
+****
+[source,c]
+----
+#include <stdlib.h>
+
+char *getenv(const char *name);
+
+int putenv(char *string);   // sample string: name=value
+
+int setenv(const char *name, const char *value, int overwrite);
+
+int unsetenv(const char *name);
+...
+extern char **environ;
+...
+int main(int argc, char *argv[], char *envp[])
+...
+----
+****
+
+* The `setenv()` function creates a new environment variable by allocating a memory
+buffer for a string of the form name=value, and copying the strings pointed to by
+name and value into that buffer.
+** The `setenv()` function doesn’t change the environment if the variable identified
+by name already exists and overwrite has the value 0.
+** If overwrite is nonzero, the environment is always changed.
+
+== 6.8 Performing a Nonlocal Goto: `setjmp()` and `longjmp()`
+
+****
+[source,c]
+----
+#include <setjmp.h>
+
+static jmp_buf env;
+
+static void f2(void)
+{
+    longjmp(env, 2);
+}
+
+static void f1(int argc)
+{
+    if (argc == 1)
+        longjmp(env, 1);
+    f2();
+}
+
+int main(int argc, char *argv[])
+{
+    switch (setjmp(env)) {
+        case 0: /* This is the return after the initial setjmp() */
+            printf("Calling f1() after initial setjmp()\n");
+            f1(argc); /* Never returns... */
+            break; /* ... but this is good form */
+
+        case 1:
+            break;
+            printf("We jumped back from f1()\n");
+
+        case 2:
+            break;
+            printf("We jumped back from f2()\n");
+    }
+
+    exit(EXIT_SUCCESS);
+}
+----
+****
+
+== Questions
+
+****
+[source,c]
+----
+include::../chap6/6.2.cpp[]
+----
+****
+
+****
+[source,c]
+----
+include::../chap6/6.3.cpp[]
+----
+****

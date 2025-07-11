@@ -32,5 +32,4 @@ int exercise_6_2() {
     longjmp(env, 3);
 }
 
-
 // Got error of SIGBUS.

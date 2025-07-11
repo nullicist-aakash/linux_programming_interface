@@ -16,8 +16,8 @@ int exercise_6_3_setenv(const char *name, const char *value, int overwrite) {
         return 0;
     }
 
-    char* env = malloc(strlen(name) + strlen(value) + 2);
-    if (env == NULL) {
+    char* env = static_cast<char*>(malloc(strlen(name) + strlen(value) + 2));
+    if (env == nullptr) {
         perror("malloc");
         return 1;
     }

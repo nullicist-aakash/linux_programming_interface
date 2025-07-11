@@ -1,0 +1,281 @@
+= Chapter 5: File I/O: Further Details
+Aakash Gupta <uchanahome8@gmail.com>
+:toc:
+
+== 5.1 Atomicity and Race Conditions
+
+* All system calls are executed atomically
+* We look at two situations involving file I/O where race conditions occur (more than these exist):
+** Exclusive creation of file: Check if exists, and then create.
+** Appending data to file via `lseek` and `write`.
+
+== 5.2 File Control Operations: `fcntl()`
+The `fcntl()` system call performs a range of control operations on an open file
+descriptor.
+
+****
+[source,c]
+----
+#include <fcntl.h>
+
+int fcntl(int fd, int cmd, ...);
+----
+****
+
+== 5.3 Open File Status Flags
+* One use of `fcntl()` is to retrieve or modify the access mode and open file status flags
+of an open file.
+** These are the values set by the flags argument specified in the call
+to `open()`.
+****
+[source,c]
+----
+int flags = fcntl(fd, F_GETFL);
+
+// We could test if the file was opened for synchronized writes as follows:
+if (flags & O_SYNC)
+    printf("writes are synchronized\n");
+----
+****
+
+* Checking the access mode of the file is slightly more complex, since the `O_RDONLY (0)`,
+`O_WRONLY (1)`, and `O_RDWR (2)` constants don’t correspond to single bits in the open file
+status flags. Therefore, to make this check, we mask the flags value with the constant `O_ACCMODE`, and then test for equality with one of the constants:
+
+****
+[source,c]
+----
+accessMode = flags & O_ACCMODE;
+
+if (accessMode == O_WRONLY || accessMode == O_RDWR)
+    printf("file is writable\n");
+----
+****
+
+* We can use the `fcntl() F_SETFL` command to modify some of the open file status flags.
+** The flags that can be modified are `O_APPEND`, `O_NONBLOCK`, `O_NOATIME`, `O_ASYNC`, and
+`O_DIRECT`.
+** Attempts to modify other flags are ignored.
+
+== 5.4 Relationship Between File Descriptors and Open Files
+* Three data structures are maintained by the kernel:
+** The per-process file descriptor table.
+** The system-wide table of open file descriptions.
+** The file system i-node table.
+
+* For each process, the kernel maintains a table of open file descriptors. Each entry in
+this table records information about a single file descriptor, including:
+** A set of flags controlling the operation of the file descriptor (there is just one
+such flag, the close-on-exec flag).
+** A reference to the open file description.
+* System-wide table contain the following information:
+** The current file offset.
+** Status flags specified when opening the file (i.e., the flags argument to `open()`).
+** The file access mode (read-only, write-only, or read-write, as specified in `open()`).
+** Settings relating to signal-driven I/O.
+** A reference to the i-node object for this file.
+
+== 5.5 Duplicating File Descriptors
+* The `dup()` call takes `oldfd`, an open file descriptor, and returns a new descriptor that
+refers to the same open file description. The new descriptor is guaranteed to be the
+lowest unused file descriptor.
+****
+[source,c]
+----
+#include <unistd.h>
+
+int dup(int oldfd);
+----
+****
+* The `dup2()` system call makes a duplicate of the file descriptor given in `oldfd` using
+the descriptor number supplied in `newfd`.
+** If the file descriptor specified in `newfd` is already open, `dup2()` closes it first.
+** A successful `dup2()` call returns the number of the duplicate descriptor (`newfd`).
+****
+[source,c]
+----
+#include <unistd.h>
+
+int dup2(int oldfd, int newfd);
+----
+****
+
+* We can also use the following command, which makes a duplicate of `oldfd` by using the lowest unused file descriptor
+greater than or equal to `startfd`:
+****
+[source,c]
+----
+newfd = fcntl(oldfd, F_DUPFD, startfd);
+----
+****
+
+== 5.6 File I/O at a Specified Offset: `pread()` and `pwrite()`
+* The `pread()` and `pwrite()` system calls operate just like `read()` and `write()`, except that
+the file I/O is performed at the location specified by offset, rather than at the current file offset.
+** The file offset is left unchanged by these calls.
+
+****
+[source,c]
+----
+#include <unistd.h>
+
+ssize_t pread(int fd, void *buf, size_t count, off_t offset);
+ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset);
+----
+****
+
+* Calling pread() is equivalent to atomically performing the following calls:
+
+****
+[source,c]
+----
+off_t orig;
+
+orig = lseek(fd, 0, SEEK_CUR); /* Save current offset */
+lseek(fd, offset, SEEK_SET);
+s = read(fd, buf, len);
+lseek(fd, orig, SEEK_SET); /* Restore original file offset */
+----
+****
+
+== 5.7 Scatter-Gather I/O: `readv()` and `writev()`
+
+****
+[source,c]
+----
+#include <sys/uio.h>
+
+struct iovec {
+    void *iov_base; /* Start address of buffer */
+    size_t iov_len; /* Number of bytes to transfer to/from buffer */
+};
+
+ssize_t readv(int fd, const struct iovec *iov, int iovcnt);
+
+ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
+----
+****
+
+== 5.8 Truncating a File: `truncate()` and `ftruncate()`
+
+****
+[source,c]
+----
+#include <unistd.h>
+
+int truncate(const char *pathname, off_t length);
+
+int ftruncate(int fd, off_t length);
+----
+****
+
+* If the file is longer than length, the excess data is lost.
+* If the file is currently shorter than length, it is extended by padding with a sequence of null bytes or a hole.
+
+NOTE: The `truncate()` system call is unique in being the only system call that can
+change the contents of a file without first obtaining a descriptor for the file via
+`open()`.
+
+== 5.9 Nonblocking I/O
+
+== 5.10 I/O on Large Files
+
+== 5.11 The `/dev/fd` Directory
+* For each process, the kernel provides the special virtual directory `/dev/fd`.
+* The following statements are equivalent:
+****
+[source,c]
+----
+fd = open("/dev/fd/1", O_WRONLY);
+fd = dup(1);
+----
+****
+* This is a good example to refer to stdin:
+****
+[source,bash]
+----
+ls | diff /dev/fd/0 oldfilelist
+----
+****
+
+== 5.12 Creating Temporary Files
+****
+[source,c]
+----
+#include <stdlib.h>
+
+int mkstemp(char *template);
+----
+****
+* The `mkstemp()` function generates a unique filename based on a template supplied by the caller and opens the file, returning a file descriptor that can be used
+with I/O system calls.
+* The `template` argument takes the form of a pathname in which the last 6 characters must be `XXXXXX`.
+* These 6 characters are replaced with a string that makes the filename
+unique, and this modified string is returned via the `template` argument.
+* The `mkstemp()` function creates the file with read and write permissions for the
+file owner (and no permissions for other users), and opens it with the `O_EXCL` flag,
+guaranteeing that the caller has exclusive access to the file.
+* Typically, a temporary file is unlinked (deleted) soon after it is opened, using
+the `unlink()` system call:
+
+****
+[source,c]
+----
+int fd;
+char template[] = "/tmp/somestringXXXXXX";
+
+fd = mkstemp(template);
+if (fd == -1)
+    errExit("mkstemp");
+
+printf("Generated filename was: %s\n", template);
+unlink(template); /* Name disappears immediately, but the file is removed only after close() */
+
+/* Use file I/O system calls - read(), write(), and so on */
+
+if (close(fd) == -1)
+    errExit("close");
+----
+****
+
+* The `tmpfile()` function creates a uniquely named temporary file that is opened for
+reading and writing.
+
+****
+[source,c]
+----
+#include <stdio.h>
+
+FILE *tmpfile(void);
+----
+****
+
+== Questions
+
+****
+[source,c]
+----
+include::../chap5/5.2.cpp[]
+----
+****
+
+****
+[source,c]
+----
+include::../chap5/5.3.cpp[]
+----
+****
+
+****
+[source,c]
+----
+include::../chap5/5.4.cpp[]
+----
+****
+
+****
+[source,c]
+----
+include::../chap5/5.7.cpp[]
+----
+****

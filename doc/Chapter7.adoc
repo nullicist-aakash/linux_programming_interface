@@ -1,0 +1,72 @@
+= Chapter 7: Memory Management
+Aakash Gupta <uchanahome8@gmail.com>
+:toc:
+
+== 7.1 Allocating Memory on the Heap
+****
+[source,c]
+----
+#include <unistd.h>
+
+int brk(void *end_data_segment);
+
+void *sbrk(intptr_t increment);
+----
+****
+
+
+****
+[source,c]
+----
+#include <stdlib.h>
+
+void *malloc(size_t size);
+
+void free(void *ptr);
+
+void *calloc(size_t numitems, size_t size);
+
+void *realloc(void *ptr, size_t size);
+----
+****
+
+
+****
+[source,c]
+----
+#include <malloc.h>
+
+// Allocates size bytes starting at an address aligned to a multiple of boundary, which must be a power of two.
+void *memalign(size_t boundary, size_t size);
+
+...
+
+#include <stdlib.h>
+
+int posix_memalign(void **memptr, size_t alignment, size_t size);
+// The posix_memalign() function differs from memalign() in two respects:
+// * The address of the allocated memory is returned in memptr.
+// * The memory is aligned to a multiple of alignment, which must be a power-of-
+// two multiple of sizeof(void *).
+----
+****
+
+
+== 7.2 Allocating Memory on the Stack: `alloca()`
+
+****
+[source,c]
+----
+#include <alloca.h>
+
+void *alloca(size_t size)
+----
+****
+
+* We need not—indeed, must not—call `free()` to deallocate memory allocated with
+`alloca()`.
+* Likewise, it is not possible to use `realloc()` to resize a block of memory allocated by `alloca()`.
+
+== Questions
+
+The question 7.2 is hard!!!

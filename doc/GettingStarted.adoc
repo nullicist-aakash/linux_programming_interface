@@ -1,0 +1,12 @@
+= Linux Programing Interface
+Aakash Gupta <uchanahome8@gmail.com>
+
+This page is the index for the documentation of my learning summaries from the book link:https://www.amazon.in/Linux-Programming-Interface-System-Handbook/dp/1593272200[The Linux Programming Interface].
+
+== Index
+* xref:Chapter4.adoc[Chapter 4: File I/O: The Universal I/O Model].
+* xref:Chapter5.adoc[Chapter 5: File I/O: Further Details].
+* xref:Chapter6.adoc[Chapter 6: Processes].
+* xref:Chapter7.adoc[Chapter 7: Memory Allocation].
+* xref:Chapter8.adoc[Chapter 8: Users and Groups].
+
