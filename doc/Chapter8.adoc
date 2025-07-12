@@ -134,6 +134,9 @@ The `setpwent()`, `getpwent()`, and `endpwent()` functions are used to perform s
 ----
 #include <pwd.h>
 
+#include <sys/types.h>  // for group equivalents
+#include <grp.h>        // for group equivalents
+
 // Returns records from the password file one by one, returning NULL when there are no more records.
 // On the first call, automatically opens the password file.
 struct passwd *getpwent(void); // getgrent() for group

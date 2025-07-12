@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.23">
 <meta name="author" content="Aakash Gupta">
-<title>Chapter 8: Users and Groups</title>
+<title>Chapter 9: Process Credentials</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /*! Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
@@ -549,7 +549,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="article">
 <div id="header">
-<h1>Chapter 8: Users and Groups</h1>
+<h1>Chapter 9: Process Credentials</h1>
 <div class="details">
 <span id="author" class="author">Aakash Gupta</span><br>
 <span id="email" class="email"><a href="mailto:uchanahome8@gmail.com">uchanahome8@gmail.com</a></span><br>
@@ -557,65 +557,76 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="toc" class="toc">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#_8_1_the_password_file_etcpasswd">8.1 The Password File: <code>/etc/passwd</code></a></li>
-<li><a href="#_8_2_the_shadow_password_file_etcshadow">8.2 The Shadow Password File: <code>/etc/shadow</code></a></li>
-<li><a href="#_8_3_the_group_file_etcgroup">8.3 The Group File: <code>/etc/group</code></a></li>
-<li><a href="#_8_4_retrieving_user_and_group_information">8.4 Retrieving User and Group Information</a>
+<li><a href="#_9_1_real_user_id_and_real_group_id">9.1 Real User ID and Real Group ID</a></li>
+<li><a href="#_9_2_effective_user_id_and_effective_group_id">9.2 Effective User ID and Effective Group ID</a></li>
+<li><a href="#_9_3_set_user_id_and_set_group_id_programs">9.3 Set-User-ID and Set-Group-ID Programs</a></li>
+<li><a href="#_9_4_saved_set_user_id_and_saved_set_group_id">9.4 Saved Set-User-ID and Saved Set-Group-ID</a></li>
+<li><a href="#_9_5_file_system_user_id_and_file_system_group_id">9.5 File-System User ID and File-System Group ID</a></li>
+<li><a href="#_9_6_supplementary_group_ids">9.6 Supplementary Group IDs</a></li>
+<li><a href="#_9_7_retrieving_and_modifying_process_credentials">9.7 Retrieving and Modifying Process Credentials</a>
 <ul class="sectlevel2">
-<li><a href="#_8_4_1_retrieving_records_from_the_password_file">8.4.1 Retrieving records from the password file</a></li>
-<li><a href="#_8_4_2_retrieving_records_from_the_group_file">8.4.2 Retrieving records from the group file</a></li>
-<li><a href="#_8_4_3_scanning_all_records_in_the_password_and_group_files">8.4.3 Scanning all records in the password and group files</a></li>
-<li><a href="#_8_4_4_retrieving_records_from_the_shadow_password_file">8.4.4 Retrieving records from the shadow password file</a></li>
+<li><a href="#_9_7_1_retrieving_and_modifying_real_effective_and_saved_set_ids">9.7.1 Retrieving and Modifying Real, Effective, and Saved Set IDs</a></li>
+<li><a href="#_9_7_2_omitted">9.7.2 &lt;OMITTED&gt;</a></li>
+<li><a href="#_9_7_3_retrieving_and_modifying_supplementary_group_ids">9.7.3 Retrieving and Modifying Supplementary Group IDs</a></li>
 </ul>
 </li>
-<li><a href="#_8_5_password_encryption_and_user_authentication">8.5 Password Encryption and User Authentication</a></li>
 <li><a href="#_questions">Questions</a></li>
 </ul>
 </div>
 </div>
 <div id="content">
-<div id="preamble">
+<div class="sect1">
+<h2 id="_9_1_real_user_id_and_real_group_id">9.1 Real User ID and Real Group ID</h2>
 <div class="sectionbody">
 <div class="ulist">
 <ul>
 <li>
-<p>Each file belongs to a particular user and group.</p>
+<p>The real user ID and group ID identify the user and group to which the process belongs.</p>
 </li>
 <li>
-<p>Each process has a number of user and group IDs that determine who owns the process and what permissions it has when accessing a file.</p>
+<p>As part of the login process, a login shell gets its real user and group IDs from the third and fourth fields of the user’s password record in the <code>/etc/passwd</code> file
+(Section 8.1).</p>
+</li>
+<li>
+<p>When a new process is created (e.g., when the shell executes a program), it inherits these identifiers from its parent.</p>
 </li>
 </ul>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_8_1_the_password_file_etcpasswd">8.1 The Password File: <code>/etc/passwd</code></h2>
+<h2 id="_9_2_effective_user_id_and_effective_group_id">9.2 Effective User ID and Effective Group ID</h2>
 <div class="sectionbody">
-<div class="sidebarblock">
-<div class="content">
-<div class="listingblock">
-<div class="content">
-<pre class="CodeRay highlight"><code data-lang="bash">mtk:x:1000:100:Michael Kerrisk:/home/mtk:/bin/bash
-
-# login_name:encrypted_password:user_id:group_id:comment:home_directory:login_shell</code></pre>
-</div>
-</div>
-</div>
-</div>
 <div class="ulist">
 <ul>
 <li>
-<p><strong>Login name</strong>: This is the unique name that the user must enter in order to log in.</p>
-</li>
-<li>
-<p><strong>Encrypted password</strong>: This field contains a 13-character encrypted password.</p>
+<p>On most UNIX implementations, the effective user ID and group ID, in conjunction with the supplementary group IDs, are used to determine the permissions granted to a process when it tries to perform various operations (i.e., system calls).</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Note, however, that this field is ignored if shadow passwords have been enabled.</p>
+<p>Linux is a little different, as explained in Section 9.5.</p>
 </li>
 <li>
-<p>In this case, the password field in <code>/etc/passwd</code> conventionally contains the letter <code>x</code> (although any nonempty character string may appear), and the encrypted password is instead stored in the shadow password file.</p>
+<p>For example, these identifiers determine the permissions granted to a process when it accesses resources such as files and System V interprocess communication (IPC) objects, which themselves have associated user and group IDs determining to whom they belong.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>As we’ll see in Section 20.5, the effective user ID is also used by the kernel to determine whether one process can send a signal to another.</p>
+</li>
+<li>
+<p>A process whose effective user ID is 0 (the user ID of root) has all of the privileges of the superuser. Such a process is referred to as a privileged process.</p>
+</li>
+<li>
+<p>Normally, the effective user and group IDs have the same values as the corresponding real IDs, but there are <strong>two ways in which the effective IDs can assume different values</strong>:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>One way is through the use of system calls that we discuss in Section 9.7.</p>
+</li>
+<li>
+<p>The second way is through the execution of set-user-ID and set-group-ID programs.</p>
 </li>
 </ul>
 </div>
@@ -625,104 +636,64 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="sect1">
-<h2 id="_8_2_the_shadow_password_file_etcshadow">8.2 The Shadow Password File: <code>/etc/shadow</code></h2>
+<h2 id="_9_3_set_user_id_and_set_group_id_programs">9.3 Set-User-ID and Set-Group-ID Programs</h2>
 <div class="sectionbody">
-
-</div>
-</div>
-<div class="sect1">
-<h2 id="_8_3_the_group_file_etcgroup">8.3 The Group File: <code>/etc/group</code></h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>The group file, <code>/etc/group</code>, contains one line for each group in the system. Each line consists of four colon-separated fields, as in the following examples:</p>
-</div>
-<div class="sidebarblock">
-<div class="content">
-<div class="listingblock">
-<div class="content">
-<pre class="CodeRay highlight"><code data-lang="bash">users:x:100:
-
-jambit:x:106:claus,felli,frank,harti,markus,martin,mtk,paul
-
-# group_name:encrypted_password:group_id:user_list</code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p>To record that the user <code>avr</code> is a member of the groups <code>users</code>, <code>staff</code>, and <code>teach</code>, we would see the following record in the password file:</p>
-</div>
-<div class="sidebarblock">
-<div class="content">
-<div class="listingblock">
-<div class="content">
-<pre class="CodeRay highlight"><code data-lang="bash">avr:x:1001:100:Anthony Robins:/home/avr:/bin/bash</code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p>And the following records would appear in the group file:</p>
-</div>
-<div class="sidebarblock">
-<div class="content">
-<div class="listingblock">
-<div class="content">
-<pre class="CodeRay highlight"><code data-lang="bash">users:x:100:
-staff:x:101:mtk,avr,martinl
-teach:x:104:avr,rlb,alc</code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Note</div>
-</td>
-<td class="content">
-The fourth field of the password record, containing the group ID 100, specifies membership of the group <code>users</code>.
-</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_8_4_retrieving_user_and_group_information">8.4 Retrieving User and Group Information</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="_8_4_1_retrieving_records_from_the_password_file">8.4.1 Retrieving records from the password file</h3>
-<div class="sidebarblock">
-<div class="content">
-<div class="listingblock">
-<div class="content">
-<pre class="CodeRay highlight"><code data-lang="c"><span style="color:#579">#include</span> <span style="color:#B44;font-weight:bold">&lt;pwd.h&gt;</span>
-
-<span style="color:#080;font-weight:bold">struct</span> passwd {
-    <span style="color:#0a8;font-weight:bold">char</span> *pw_name;      <span style="color:#777">/* Login name (username) */</span>
-    <span style="color:#0a8;font-weight:bold">char</span> *pw_passwd;    <span style="color:#777">/* Encrypted password */</span>
-    uid_t pw_uid;       <span style="color:#777">/* User ID */</span>
-    gid_t pw_gid;       <span style="color:#777">/* Group ID */</span>
-    <span style="color:#0a8;font-weight:bold">char</span> *pw_gecos;     <span style="color:#777">/* Comment (user information) */</span>
-    <span style="color:#0a8;font-weight:bold">char</span> *pw_dir;       <span style="color:#777">/* Initial working (home) directory */</span>
-    <span style="color:#0a8;font-weight:bold">char</span> *pw_shell;     <span style="color:#777">/* Login shell */</span>
-};
-
-<span style="color:#080;font-weight:bold">struct</span> passwd *getpwnam(<span style="color:#088;font-weight:bold">const</span> <span style="color:#0a8;font-weight:bold">char</span> *name);
-<span style="color:#080;font-weight:bold">struct</span> passwd *getpwuid(uid_t uid);</code></pre>
-</div>
-</div>
-</div>
-</div>
 <div class="ulist">
 <ul>
 <li>
-<p>The <code>pw_passwd</code> field contains valid information only if password shadowing is not enabled.</p>
+<p>A set-user-ID program allows a process to gain privileges it would not normally have, by setting the process’s effective user ID to the same value as the user ID (owner) of the executable file.</p>
 </li>
 <li>
-<p>Both <code>getpwnam()</code> and <code>getpwuid()</code> return a pointer to a statically allocated structure.</p>
+<p>Like any other file, an executable program file has an associated user ID and group ID that define the ownership of the file.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>In addition, an executable file has two special permission bits: the set-user-ID and set-group-ID bits.</p>
+</li>
+<li>
+<p>These permission bits are set using the <code>chmod</code> command.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>The set-user-ID and set-group-ID permission bits don’t have any effect for shell scripts on Linux.</p>
+</li>
+</ul>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="bash">$ su
+Password:
+
+# ls -l prog
+-rwxr-xr-x 1 root root 302585 Jun 26 15:05 prog
+
+# chmod u+s prog                  # Turn on set-user-ID permission bit
+
+# chmod g+s prog                  # Turn on set-group-ID permission bit</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_9_4_saved_set_user_id_and_saved_set_group_id">9.4 Saved Set-User-ID and Saved Set-Group-ID</h2>
+<div class="sectionbody">
+<div class="ulist">
+<div class="title">When a process starts, (ignoring similar group ID operations)</div>
+<ul>
+<li>
+<p>Its real user ID is set as the parent process&#8217;s real IDs.</p>
+</li>
+<li>
+<p>If set-user-ID bit is set, then its effective ID is set as file&#8217;s user ID, otherwise it is equal to real user ID.</p>
+</li>
+<li>
+<p>Its saved set-user-ID is copied from effective ID.</p>
 </li>
 </ul>
 </div>
@@ -733,9 +704,24 @@ The fourth field of the password record, containing the group ID 100, specifies 
 <div class="title">Note</div>
 </td>
 <td class="content">
-Programmatically, the simplest way to determine whether password shadowing is enabled is to follow a
-successful <code>getpwnam()</code> call with a call to <code>getspnam()</code>, described shortly, to see if it
-returns a shadow password record for the same username.
+The <em>saved set-user-ID</em> and saved <em>set-group-ID</em> are sometimes synonymously referred to as the <em>saved user ID</em> and <em>saved group ID</em>.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_9_5_file_system_user_id_and_file_system_group_id">9.5 File-System User ID and File-System Group ID</h2>
+<div class="sectionbody">
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Important</div>
+</td>
+<td class="content">
+IGNORE as these IDs are present for historical reasons.
 </td>
 </tr>
 </table>
@@ -743,7 +729,106 @@ returns a shadow password record for the same username.
 <div class="ulist">
 <ul>
 <li>
-<p>If a matching passwd record can’t be found, then <code>getpwnam()</code> and <code>getpwuid()</code> should return <code>NULL</code> and leave <code>errno</code> unchanged.</p>
+<p>It is almost always equal to effective ID.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>It can be changed by <code>setfsuid()</code> and <code>setfsgid()</code> system calls.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Whenever effective ID is changed, this ID is also changed.</p>
+</li>
+<li>
+<p>In UNIX, this concept doesn&#8217;t exist.</p>
+</li>
+<li>
+<p>In Linux, any file system operation (opening, modification of permissions, change of ownership) is performed in light of this flag.</p>
+</li>
+<li>
+<p>Book mentions a use case of NFS, but I don&#8217;t understand it.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_9_6_supplementary_group_ids">9.6 Supplementary Group IDs</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Nothing special. This just specifies that each process inherits the groups and login shell inherits them from group file.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_9_7_retrieving_and_modifying_process_credentials">9.7 Retrieving and Modifying Process Credentials</h2>
+<div class="sectionbody">
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+As an alternative to using the system calls described in the following pages, the credentials of any process can be found by examining the Uid, Gid, and Groups lines provided in the Linux-specific <code>/proc/PID/status file</code>.
+The Uid and Gid lines list the identifiers in the order: real, effective, saved set, and file system.
+</td>
+</tr>
+</table>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Linux divides the notion of superuser privileges into distinct capabilities, as described in Chapter 39. Two capabilities are relevant for our discussion of all of the system calls used to change process user and group IDs:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>The <code>CAP_SETUID</code> capability allows a process to make arbitrary changes to its user IDs.</p>
+</li>
+<li>
+<p>The <code>CAP_SETGID</code> capability allows a process to make arbitrary changes to its group IDs.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="sect2">
+<h3 id="_9_7_1_retrieving_and_modifying_real_effective_and_saved_set_ids">9.7.1 Retrieving and Modifying Real, Effective, and Saved Set IDs</h3>
+<div class="sect3">
+<h4 id="_retrieving_real_and_effective_ids">Retrieving real and effective IDs</h4>
+<div class="paragraph">
+<p>We have the following functions to retrieve the corresponding IDS:</p>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="c"><span style="color:#579">#include</span> <span style="color:#B44;font-weight:bold">&lt;unistd.h&gt;</span>
+
+uid_t getuid(<span style="color:#088;font-weight:bold">void</span>);                 <span style="color:#777">// Returns real user ID of calling process</span>
+
+uid_t geteuid(<span style="color:#088;font-weight:bold">void</span>);                <span style="color:#777">// Returns effective user ID of calling process</span>
+
+gid_t getgid(<span style="color:#088;font-weight:bold">void</span>);                 <span style="color:#777">// Returns real group ID of calling process</span>
+
+gid_t getegid(<span style="color:#088;font-weight:bold">void</span>);                <span style="color:#777">// Returns effective group ID of calling process</span></code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_retrieving_real_effective_and_saved_set_ids">Retrieving real, effective, and saved set IDs</h4>
+<div class="ulist">
+<ul>
+<li>
+<p>No way to do this on UNIX.</p>
+</li>
+<li>
+<p>Linux provides two non-standard APIs:</p>
 </li>
 </ul>
 </div>
@@ -751,208 +836,198 @@ returns a shadow password record for the same username.
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre class="CodeRay highlight"><code data-lang="c"><span style="color:#080;font-weight:bold">struct</span> passwd *pwd;
+<pre class="CodeRay highlight"><code data-lang="c"><span style="color:#579">#define</span> _GNU_SOURCE
+<span style="color:#579">#include</span> <span style="color:#B44;font-weight:bold">&lt;unistd.h&gt;</span>
 
-errno = <span style="color:#00D">0</span>;
-pwd = getpwnam(name);
+<span style="color:#0a8;font-weight:bold">int</span> getresuid(uid_t *ruid, uid_t *euid, uid_t *suid);
 
-<span style="color:#080;font-weight:bold">if</span> (pwd == <span style="color:#069">NULL</span>) {
-    <span style="color:#080;font-weight:bold">if</span> (errno == <span style="color:#00D">0</span>)
-        <span style="color:#777">/* Not found */</span>;
-    <span style="color:#080;font-weight:bold">else</span>
-        <span style="color:#777">/* Error */</span>;
-}</code></pre>
+<span style="color:#0a8;font-weight:bold">int</span> getresgid(gid_t *rgid, gid_t *egid, gid_t *sgid);</code></pre>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="sect2">
-<h3 id="_8_4_2_retrieving_records_from_the_group_file">8.4.2 Retrieving records from the group file</h3>
-<div class="sidebarblock">
-<div class="content">
-<div class="listingblock">
-<div class="content">
-<pre class="CodeRay highlight"><code data-lang="c"><span style="color:#579">#include</span> <span style="color:#B44;font-weight:bold">&lt;grp.h&gt;</span>
-
-<span style="color:#080;font-weight:bold">struct</span> group {
-    <span style="color:#0a8;font-weight:bold">char</span> *gr_name;      <span style="color:#777">/* Group name */</span>
-    <span style="color:#0a8;font-weight:bold">char</span> *gr_passwd;    <span style="color:#777">/* Encrypted password (if not password shadowing) */</span>
-    gid_t gr_gid;       <span style="color:#777">/* Group ID */</span>
-    <span style="color:#0a8;font-weight:bold">char</span> **gr_mem;      <span style="color:#777">/* NULL-terminated array of pointers to names of members listed in /etc/group */</span>
-};
-
-<span style="color:#080;font-weight:bold">struct</span> group *getgrnam(<span style="color:#088;font-weight:bold">const</span> <span style="color:#0a8;font-weight:bold">char</span> *name);
-
-<span style="color:#080;font-weight:bold">struct</span> group *getgrgid(gid_t gid);</code></pre>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_8_4_3_scanning_all_records_in_the_password_and_group_files">8.4.3 Scanning all records in the password and group files</h3>
+<div class="sect3">
+<h4 id="_modifying_effective_ids">Modifying effective IDs</h4>
 <div class="paragraph">
-<p>The <code>setpwent()</code>, <code>getpwent()</code>, and <code>endpwent()</code> functions are used to perform sequential scans of the records in the password file.</p>
+<p>To set the effective user IDs (and potentially real and saved IDs), the following functions can be used:</p>
 </div>
 <div class="sidebarblock">
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre class="CodeRay highlight"><code data-lang="c"><span style="color:#579">#include</span> <span style="color:#B44;font-weight:bold">&lt;pwd.h&gt;</span>
+<pre class="CodeRay highlight"><code data-lang="c"><span style="color:#579">#include</span> <span style="color:#B44;font-weight:bold">&lt;unistd.h&gt;</span>
 
-<span style="color:#579">#include</span> <span style="color:#B44;font-weight:bold">&lt;sys/types.h&gt;</span>  <span style="color:#777">// for group equivalents</span>
-<span style="color:#579">#include</span> <span style="color:#B44;font-weight:bold">&lt;grp.h&gt;</span>        <span style="color:#777">// for group equivalents</span>
+<span style="color:#0a8;font-weight:bold">int</span> setuid(uid_t uid);
 
-<span style="color:#777">// Returns records from the password file one by one, returning NULL when there are no more records.</span>
-<span style="color:#777">// On the first call, automatically opens the password file.</span>
-<span style="color:#080;font-weight:bold">struct</span> passwd *getpwent(<span style="color:#088;font-weight:bold">void</span>); <span style="color:#777">// getgrent() for group</span>
-
-<span style="color:#777">// If we are part-way through the file, we can use the setpwent() function to restart from the</span>
-<span style="color:#777">// beginning.</span>
-<span style="color:#088;font-weight:bold">void</span> setpwent(<span style="color:#088;font-weight:bold">void</span>);            <span style="color:#777">// setgrent() for group</span>
-
-<span style="color:#777">// When we have finished with the file, we call endpwent() to close it.</span>
-<span style="color:#088;font-weight:bold">void</span> endpwent(<span style="color:#088;font-weight:bold">void</span>);            <span style="color:#777">// endgrent() for group</span>
-
-<span style="color:#080;font-weight:bold">struct</span> passwd *pwd;
-
-<span style="color:#080;font-weight:bold">while</span> ((pwd = getpwent()) != <span style="color:#069">NULL</span>)
-    printf(<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">%-8s %5ld</span><span style="color:#b0b">\n</span><span style="color:#710">&quot;</span></span>, pwd-&gt;pw_name, (<span style="color:#0a8;font-weight:bold">long</span>) pwd-&gt;pw_uid);
-
-endpwent();</code></pre>
+<span style="color:#0a8;font-weight:bold">int</span> setgid(gid_t gid);</code></pre>
 </div>
 </div>
+</div>
+</div>
+<div class="ulist">
+<div class="title">These are the rules for above methods:</div>
+<ul>
+<li>
+<p>If it is unprivileged user, <code>setuid</code> will only change effective ID, and it can be either of real or saved.</p>
+</li>
+<li>
+<p>When <code>CAP_SETUID</code> does this, all IDs are changed to specified ID (and no restriction is present on the value of input parameters). It is important to note that once privileges are downgraded, the process can&#8217;t regain them.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>To only change effective IDs, refer to <code>seteuid</code> or <code>setegid</code> functions.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_modifying_real_and_effective_ids">Modifying real and effective IDs</h4>
+<div class="paragraph">
+<p>We can use the following functions to change the real user ID:</p>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="c"><span style="color:#579">#include</span> <span style="color:#B44;font-weight:bold">&lt;unistd.h&gt;</span>
+
+<span style="color:#0a8;font-weight:bold">int</span> setreuid(uid_t ruid, uid_t euid);
+
+<span style="color:#0a8;font-weight:bold">int</span> setregid(gid_t rgid, gid_t egid);</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="olist arabic">
+<div class="title">Here are the rules:</div>
+<ol class="arabic">
+<li>
+<p>Unprivileged process can set real ID to either current real ID or effective ID.</p>
+</li>
+<li>
+<p>Privileged process can make any changes.</p>
+</li>
+<li>
+<p>Rules for change in saved user ID via these functions:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>If real user ID is set (!= -1), even to existing value, the saved ID is set to real user ID.</p>
+</li>
+<li>
+<p>If effective ID is set to anything other than value of real ID prior to call.</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+This third rule allows set-user-ID program to drop its privileges: <code>setreuid(getuid(), getuid());</code>.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_modifying_real_effective_and_saved_set_ids">Modifying real, effective, and saved set IDs</h4>
+<div class="sidebarblock">
+<div class="content">
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="c"><span style="color:#579">#define</span> _GNU_SOURCE
+<span style="color:#579">#include</span> <span style="color:#B44;font-weight:bold">&lt;unistd.h&gt;</span>
+
+<span style="color:#0a8;font-weight:bold">int</span> setresuid(uid_t ruid, uid_t euid, uid_t suid);
+
+<span style="color:#0a8;font-weight:bold">int</span> setresgid(gid_t rgid, gid_t egid, gid_t sgid);</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="ulist">
+<div class="title">These are the rules:</div>
+<ul>
+<li>
+<p>If we don’t want to change all of the identifiers, then specifying –1 for an argument leaves the corresponding identifier unchanged.</p>
+</li>
+<li>
+<p>An unprivileged process can set any of its real user ID, effective user ID, and saved set-user-ID to any of the values currently in its current real user ID, effective user ID, or saved set-user-ID.</p>
+</li>
+<li>
+<p>A privileged process can make arbitrary changes to its real user ID, effective user ID, and saved set-user-ID.</p>
+</li>
+<li>
+<p>Regardless of whether the call makes any changes to other IDs, the file-system user ID is always set to the same value as the (possibly new) effective user ID.</p>
+</li>
+</ul>
 </div>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_8_4_4_retrieving_records_from_the_shadow_password_file">8.4.4 Retrieving records from the shadow password file</h3>
+<h3 id="_9_7_2_omitted">9.7.2 &lt;OMITTED&gt;</h3>
+
+</div>
+<div class="sect2">
+<h3 id="_9_7_3_retrieving_and_modifying_supplementary_group_ids">9.7.3 Retrieving and Modifying Supplementary Group IDs</h3>
 <div class="sidebarblock">
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre class="CodeRay highlight"><code data-lang="c"><span style="color:#579">#include</span> <span style="color:#B44;font-weight:bold">&lt;shadow.h&gt;</span>
+<pre class="CodeRay highlight"><code data-lang="c"><span style="color:#579">#include</span> <span style="color:#B44;font-weight:bold">&lt;unistd.h&gt;</span>
 
-<span style="color:#080;font-weight:bold">struct</span> spwd {
-    <span style="color:#0a8;font-weight:bold">char</span> *sp_namp;     <span style="color:#777">/* Login name */</span>
-    <span style="color:#0a8;font-weight:bold">char</span> *sp_pwdp;     <span style="color:#777">/* Encrypted password */</span>
-    <span style="color:#0a8;font-weight:bold">long</span>  sp_lstchg;   <span style="color:#777">/* Date of last change
-                         (measured in days since
-                         1970-01-01 00:00:00 +0000 (UTC)) */</span>
-    <span style="color:#0a8;font-weight:bold">long</span>  sp_min;      <span style="color:#777">/* Min # of days between changes */</span>
-    <span style="color:#0a8;font-weight:bold">long</span>  sp_max;      <span style="color:#777">/* Max # of days between changes */</span>
-    <span style="color:#0a8;font-weight:bold">long</span>  sp_warn;     <span style="color:#777">/* # of days before password expires
-                         to warn user to change it */</span>
-    <span style="color:#0a8;font-weight:bold">long</span>  sp_inact;    <span style="color:#777">/* # of days after password expires
-                         until account is disabled */</span>
-    <span style="color:#0a8;font-weight:bold">long</span>  sp_expire;   <span style="color:#777">/* Date when account expires
-                         (measured in days since
-                         1970-01-01 00:00:00 +0000 (UTC)) */</span>
-    <span style="color:#0a8;font-weight:bold">unsigned</span> <span style="color:#0a8;font-weight:bold">long</span> sp_flag;  <span style="color:#777">/* Reserved */</span>
-};
-
-<span style="color:#080;font-weight:bold">struct</span> spwd *getspnam(<span style="color:#088;font-weight:bold">const</span> <span style="color:#0a8;font-weight:bold">char</span> *name);
-
-<span style="color:#080;font-weight:bold">struct</span> spwd *getspent(<span style="color:#088;font-weight:bold">void</span>);
-
-<span style="color:#088;font-weight:bold">void</span> setspent(<span style="color:#088;font-weight:bold">void</span>);
-
-<span style="color:#088;font-weight:bold">void</span> endspent(<span style="color:#088;font-weight:bold">void</span>);</code></pre>
+<span style="color:#777">// Returns number of group IDs placed in grouplist on success, or –1 on error</span>
+<span style="color:#0a8;font-weight:bold">int</span> getgroups(<span style="color:#0a8;font-weight:bold">int</span> gidsetsize, gid_t grouplist[]);</code></pre>
 </div>
 </div>
 </div>
 </div>
+<div class="ulist">
+<ul>
+<li>
+<p>The <code>grouplist</code> must be pre-allocated to be able to accommodate all group ids, otherwise the call will fail.</p>
+</li>
+<li>
+<p>User can make <code>NGROUPS_MAX</code> call to find the max value at compile time, and the array size should be <code>NGROUPS_MAX</code> + 1 (Some implementation also return effective gid).</p>
+</li>
+<li>
+<p>At runtime, this value can be queried in two ways:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>sysconf(_SC_NGROUPS_MAX)</code>.</p>
+</li>
+<li>
+<p>Read the limit from the read-only, Linux-specific <code>/proc/sys/kernel/ngroups_max</code> file.</p>
+</li>
+</ul>
 </div>
+</li>
+<li>
+<p>Alternatively, an application can make a call to <code>getgroups()</code> specifying <code>gidtsetsize</code> as 0. In this case, <code>grouplist</code> is not modified, but the return value of the call gives the number of groups of which the process is a member.</p>
+</li>
+</ul>
 </div>
+<div class="paragraph">
+<p>Not adding details of the following:</p>
 </div>
-<div class="sect1">
-<h2 id="_8_5_password_encryption_and_user_authentication">8.5 Password Encryption and User Authentication</h2>
-<div class="sectionbody">
 <div class="sidebarblock">
 <div class="content">
 <div class="listingblock">
 <div class="content">
-<pre class="CodeRay highlight"><code data-lang="c"><span style="color:#579">#define</span> _XOPEN_SOURCE
-<span style="color:#579">#include</span> <span style="color:#B44;font-weight:bold">&lt;unistd.h&gt;</span>
+<pre class="CodeRay highlight"><code data-lang="c"><span style="color:#579">#define</span> _BSD_SOURCE
+<span style="color:#579">#include</span> <span style="color:#B44;font-weight:bold">&lt;grp.h&gt;</span>
 
-<span style="color:#0a8;font-weight:bold">char</span> *crypt(<span style="color:#088;font-weight:bold">const</span> <span style="color:#0a8;font-weight:bold">char</span> *key, <span style="color:#088;font-weight:bold">const</span> <span style="color:#0a8;font-weight:bold">char</span> *salt);
+<span style="color:#0a8;font-weight:bold">int</span> setgroups(size_t gidsetsize, <span style="color:#088;font-weight:bold">const</span> gid_t *grouplist);
 
-...
-
-<span style="color:#579">#define</span> _BSD_SOURCE
-<span style="color:#579">#include</span> <span style="color:#B44;font-weight:bold">&lt;unistd.h&gt;</span>
-
-<span style="color:#0a8;font-weight:bold">char</span> *getpass(<span style="color:#088;font-weight:bold">const</span> <span style="color:#0a8;font-weight:bold">char</span> *prompt);
-
-...
-
-<span style="color:#579">#define</span> _BSD_SOURCE <span style="color:#777">/* Get getpass() declaration from &lt;unistd.h&gt; */</span>
-<span style="color:#579">#define</span> _XOPEN_SOURCE <span style="color:#777">/* Get crypt() declaration from &lt;unistd.h&gt; */</span>
-<span style="color:#579">#include</span> <span style="color:#B44;font-weight:bold">&lt;unistd.h&gt;</span>
-<span style="color:#579">#include</span> <span style="color:#B44;font-weight:bold">&lt;limits.h&gt;</span>
-<span style="color:#579">#include</span> <span style="color:#B44;font-weight:bold">&lt;pwd.h&gt;</span>
-<span style="color:#579">#include</span> <span style="color:#B44;font-weight:bold">&lt;shadow.h&gt;</span>
-
-<span style="color:#0a8;font-weight:bold">int</span> main(<span style="color:#0a8;font-weight:bold">int</span> argc, <span style="color:#0a8;font-weight:bold">char</span> *argv[])
-{
-    <span style="color:#0a8;font-weight:bold">char</span> *username, *password, *encrypted, *p;
-    <span style="color:#080;font-weight:bold">struct</span> passwd *pwd;
-    <span style="color:#080;font-weight:bold">struct</span> spwd *spwd;
-    Boolean authOk;
-    size_t len;
-    <span style="color:#0a8;font-weight:bold">long</span> lnmax;
-
-    lnmax = sysconf(_SC_LOGIN_NAME_MAX);
-    <span style="color:#080;font-weight:bold">if</span> (lnmax == -<span style="color:#00D">1</span>)  <span style="color:#777">/* If limit is indeterminate */</span>
-        lnmax = <span style="color:#00D">256</span>;  <span style="color:#777">/* make a guess */</span>
-
-    username = malloc(lnmax);
-    <span style="color:#080;font-weight:bold">if</span> (username == <span style="color:#069">NULL</span>)
-        errExit(<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">malloc</span><span style="color:#710">&quot;</span></span>);
-
-    printf(<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">Username: </span><span style="color:#710">&quot;</span></span>);
-    fflush(stdout);
-    <span style="color:#080;font-weight:bold">if</span> (fgets(username, lnmax, stdin) == <span style="color:#069">NULL</span>)
-        exit(EXIT_FAILURE); <span style="color:#777">/* Exit on EOF */</span>
-
-    len = strlen(username);
-    <span style="color:#080;font-weight:bold">if</span> (username[len - <span style="color:#00D">1</span>] == <span style="color:#D20">'\n'</span>)
-        username[len - <span style="color:#00D">1</span>] = <span style="color:#D20">'\0'</span>; <span style="color:#777">/* Remove trailing '\n' */</span>
-
-    pwd = getpwnam(username);
-    <span style="color:#080;font-weight:bold">if</span> (pwd == <span style="color:#069">NULL</span>)
-        fatal(<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">couldn't get password record</span><span style="color:#710">&quot;</span></span>);
-    spwd = getspnam(username);
-    <span style="color:#080;font-weight:bold">if</span> (spwd == <span style="color:#069">NULL</span> &amp;&amp; errno == EACCES)
-        fatal(<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">no permission to read shadow password file</span><span style="color:#710">&quot;</span></span>);
-
-    <span style="color:#080;font-weight:bold">if</span> (spwd != <span style="color:#069">NULL</span>)                   <span style="color:#777">/* If there is a shadow password record */</span>
-        pwd-&gt;pw_passwd = spwd-&gt;sp_pwdp; <span style="color:#777">/* Use the shadow password */</span>
-
-    password = getpass(<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">Password: </span><span style="color:#710">&quot;</span></span>);
-
-    <span style="color:#777">/* Encrypt password and erase cleartext version immediately */</span>
-
-    encrypted = crypt(password, pwd-&gt;pw_passwd);
-    <span style="color:#080;font-weight:bold">for</span> (p = password; *p != <span style="color:#D20">'\0'</span>; )
-        *p++ = <span style="color:#D20">'\0'</span>;
-
-    <span style="color:#080;font-weight:bold">if</span> (encrypted == <span style="color:#069">NULL</span>)
-        errExit(<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">crypt</span><span style="color:#710">&quot;</span></span>);
-
-    authOk = strcmp(encrypted, pwd-&gt;pw_passwd) == <span style="color:#00D">0</span>;
-    <span style="color:#080;font-weight:bold">if</span> (!authOk) {
-        printf(<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">Incorrect password</span><span style="color:#b0b">\n</span><span style="color:#710">&quot;</span></span>);
-        exit(EXIT_FAILURE);
-    }
-
-    printf(<span style="background-color:hsla(0,100%,50%,0.05)"><span style="color:#710">&quot;</span><span style="color:#D20">Successfully authenticated: UID=%ld</span><span style="color:#b0b">\n</span><span style="color:#710">&quot;</span></span>, (<span style="color:#0a8;font-weight:bold">long</span>) pwd-&gt;pw_uid);
-
-    <span style="color:#777">/* Now do authenticated work... */</span>
-
-    exit(EXIT_SUCCESS);
-}</code></pre>
+<span style="color:#0a8;font-weight:bold">int</span> initgroups(<span style="color:#088;font-weight:bold">const</span> <span style="color:#0a8;font-weight:bold">char</span> *user, gid_t group);</code></pre>
+</div>
 </div>
 </div>
 </div>
@@ -962,41 +1037,87 @@ endpwent();</code></pre>
 <div class="sect1">
 <h2 id="_questions">Questions</h2>
 <div class="sectionbody">
-<div class="sidebarblock">
-<div class="content">
-<div class="listingblock">
-<div class="content">
-<pre class="CodeRay highlight"><code data-lang="c"><span style="color:#777">// Implement getpwnam() using setpwent(), getpwent(), and endpwent().</span>
-
-<span style="color:#579">#include</span> <span style="color:#B44;font-weight:bold">&lt;cstring&gt;</span>
-<span style="color:#579">#include</span> <span style="color:#B44;font-weight:bold">&lt;pwd.h&gt;</span>
-
-
-passwd* my_getpwnam(<span style="color:#088;font-weight:bold">const</span> <span style="color:#0a8;font-weight:bold">char</span>* name) {
-    passwd *pwd;
-
-    setpwent();
-
-    <span style="color:#080;font-weight:bold">while</span> ((pwd = getpwent()) != nullptr) {
-        <span style="color:#080;font-weight:bold">if</span> (strcmp(pwd-&gt;pw_name, name) == <span style="color:#00D">0</span>) {
-            endpwent();
-            <span style="color:#080;font-weight:bold">return</span> pwd;
-        }
-    }
-
-    endpwent();
-    <span style="color:#080;font-weight:bold">return</span> nullptr;
-}</code></pre>
+<div class="paragraph">
+<p>Q1. Assume in each of the following cases that the initial set of process user IDs is
+real=1000 effective=0 saved=0 file-system=0. What would be the state of the user IDs
+after the following calls?</p>
 </div>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 1. Answer 1</caption>
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 20%;">
+<col style="width: 20%;">
+<col style="width: 20%;">
+<col style="width: 20%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Command</th>
+<th class="tableblock halign-left valign-top">real</th>
+<th class="tableblock halign-left valign-top">effective</th>
+<th class="tableblock halign-left valign-top">saved</th>
+<th class="tableblock halign-left valign-top">file-system</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">setuid(2000)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2000</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">setreuid(–1, 2000)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2000</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">seteuid(2000)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">setfsuid(2000)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2000</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">setresuid(–1, 2000, 3000)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3000</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Q2. Is a process with the following user IDs privileged? Explain your answer. (real=0 effective=1000 saved=1000 file-system=1000)</p>
 </div>
+<div class="ulist">
+<div class="title">Answer 2</div>
+<ul>
+<li>
+<p>No. The effective ID determines the privilege level of any process.</p>
+</li>
+</ul>
 </div>
+<div class="paragraph">
+<p>Q3.</p>
 </div>
 </div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2025-07-12 19:00:13 UTC
+Last updated 2025-07-12 18:55:09 UTC
 </div>
 </div>
 <script>

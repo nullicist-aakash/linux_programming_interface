@@ -13,4 +13,5 @@ add_executable(
         chap6/6.2.cpp
         chap6/6.3.cpp
         chap8/8.2.cpp
+        chap9/9.3.cpp
 )

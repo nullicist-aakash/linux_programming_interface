@@ -10,7 +10,7 @@ Aakash Gupta <uchanahome8@gmail.com>
 
 == 9.2 Effective User ID and Effective Group ID
 * On most UNIX implementations, the effective user ID and group ID, in conjunction with the supplementary group IDs, are used to determine the permissions granted to a process when it tries to perform various operations (i.e., system calls).
-** Linux is a little different, as explained in Section 9.5
+** Linux is a little different, as explained in Section 9.5.
 ** For example, these identifiers determine the permissions granted to a process when it accesses resources such as files and System V interprocess communication (IPC) objects, which themselves have associated user and group IDs determining to whom they belong.
 * As we’ll see in Section 20.5, the effective user ID is also used by the kernel to determine whether one process can send a signal to another.
 * A process whose effective user ID is 0 (the user ID of root) has all of the privileges of the superuser. Such a process is referred to as a privileged process.
@@ -39,3 +39,197 @@ Password:
 # chmod g+s prog                  # Turn on set-group-ID permission bit
 ----
 ****
+
+== 9.4 Saved Set-User-ID and Saved Set-Group-ID
+.When a process starts, (ignoring similar group ID operations)
+* Its real user ID is set as the parent process's real IDs.
+* If set-user-ID bit is set, then its effective ID is set as file's user ID, otherwise it is equal to real user ID.
+* Its saved set-user-ID is copied from effective ID.
+
+NOTE: The _saved set-user-ID_ and saved _set-group-ID_ are sometimes synonymously referred to as the _saved user ID_ and _saved group ID_.
+
+== 9.5 File-System User ID and File-System Group ID
+
+IMPORTANT: IGNORE as these IDs are present for historical reasons.
+
+* It is almost always equal to effective ID.
+** It can be changed by `setfsuid()` and `setfsgid()` system calls.
+* Whenever effective ID is changed, this ID is also changed.
+* In UNIX, this concept doesn't exist.
+* In Linux, any file system operation (opening, modification of permissions, change of ownership) is performed in light of this flag.
+* Book mentions a use case of NFS, but I don't understand it.
+
+== 9.6 Supplementary Group IDs
+
+Nothing special. This just specifies that each process inherits the groups and login shell inherits them from group file.
+
+== 9.7 Retrieving and Modifying Process Credentials
+
+NOTE: As an alternative to using the system calls described in the following pages, the credentials of any process can be found by examining the Uid, Gid, and Groups lines provided in the Linux-specific `/proc/PID/status file`.
+The Uid and Gid lines list the identifiers in the order: real, effective, saved set, and file system.
+
+* Linux divides the notion of superuser privileges into distinct capabilities, as described in Chapter 39. Two capabilities are relevant for our discussion of all of the system calls used to change process user and group IDs:
+** The `CAP_SETUID` capability allows a process to make arbitrary changes to its user IDs.
+** The `CAP_SETGID` capability allows a process to make arbitrary changes to its group IDs.
+
+=== 9.7.1 Retrieving and Modifying Real, Effective, and Saved Set IDs
+
+==== Retrieving real and effective IDs
+
+We have the following functions to retrieve the corresponding IDS:
+****
+[source,c]
+----
+#include <unistd.h>
+
+uid_t getuid(void);                 // Returns real user ID of calling process
+
+uid_t geteuid(void);                // Returns effective user ID of calling process
+
+gid_t getgid(void);                 // Returns real group ID of calling process
+
+gid_t getegid(void);                // Returns effective group ID of calling process
+----
+****
+
+==== Retrieving real, effective, and saved set IDs
+* No way to do this on UNIX.
+* Linux provides two non-standard APIs:
+
+****
+[source,c]
+----
+#define _GNU_SOURCE
+#include <unistd.h>
+
+int getresuid(uid_t *ruid, uid_t *euid, uid_t *suid);
+
+int getresgid(gid_t *rgid, gid_t *egid, gid_t *sgid);
+----
+****
+
+==== Modifying effective IDs
+To set the effective user IDs (and potentially real and saved IDs), the following functions can be used:
+****
+[source,c]
+----
+#include <unistd.h>
+
+int setuid(uid_t uid);
+
+int setgid(gid_t gid);
+----
+****
+
+.These are the rules for above methods:
+* If it is unprivileged user, `setuid` will only change effective ID, and it can be either of real or saved.
+* When `CAP_SETUID` does this, all IDs are changed to specified ID (and no restriction is present on the value of input parameters). It is important to note that once privileges are downgraded, the process can't regain them.
+
+To only change effective IDs, refer to `seteuid` or `setegid` functions.
+
+==== Modifying real and effective IDs
+
+We can use the following functions to change the real user ID:
+****
+[source,c]
+----
+#include <unistd.h>
+
+int setreuid(uid_t ruid, uid_t euid);
+
+int setregid(gid_t rgid, gid_t egid);
+----
+****
+
+.Here are the rules:
+1. Unprivileged process can set real ID to either current real ID or effective ID.
+2. Privileged process can make any changes.
+3. Rules for change in saved user ID via these functions:
+** If real user ID is set (!= -1), even to existing value, the saved ID is set to real user ID.
+** If effective ID is set to anything other than value of real ID prior to call.
+
+NOTE: This third rule allows set-user-ID program to drop its privileges: `setreuid(getuid(), getuid());`.
+
+==== Modifying real, effective, and saved set IDs
+****
+[source,c]
+----
+#define _GNU_SOURCE
+#include <unistd.h>
+
+int setresuid(uid_t ruid, uid_t euid, uid_t suid);
+
+int setresgid(gid_t rgid, gid_t egid, gid_t sgid);
+----
+****
+
+.These are the rules:
+* If we don’t want to change all of the identifiers, then specifying –1 for an argument leaves the corresponding identifier unchanged.
+* An unprivileged process can set any of its real user ID, effective user ID, and saved set-user-ID to any of the values currently in its current real user ID, effective user ID, or saved set-user-ID.
+* A privileged process can make arbitrary changes to its real user ID, effective user ID, and saved set-user-ID.
+* Regardless of whether the call makes any changes to other IDs, the file-system user ID is always set to the same value as the (possibly new) effective user ID.
+
+=== 9.7.2 <OMITTED>
+
+=== 9.7.3 Retrieving and Modifying Supplementary Group IDs
+****
+[source,c]
+----
+#include <unistd.h>
+
+// Returns number of group IDs placed in grouplist on success, or –1 on error
+int getgroups(int gidsetsize, gid_t grouplist[]);
+----
+****
+
+* The `grouplist` must be pre-allocated to be able to accommodate all group ids, otherwise the call will fail.
+* User can make `NGROUPS_MAX` call to find the max value at compile time, and the array size should be `NGROUPS_MAX` + 1 (Some implementation also return effective gid).
+* At runtime, this value can be queried in two ways:
+** `sysconf(_SC_NGROUPS_MAX)`.
+** Read the limit from the read-only, Linux-specific `/proc/sys/kernel/ngroups_max` file.
+* Alternatively, an application can make a call to `getgroups()` specifying `gidtsetsize` as 0. In this case, `grouplist` is not modified, but the return value of the call gives the number of groups of which the process is a member.
+
+Not adding details of the following:
+****
+[source,c]
+----
+#define _BSD_SOURCE
+#include <grp.h>
+
+int setgroups(size_t gidsetsize, const gid_t *grouplist);
+
+int initgroups(const char *user, gid_t group);
+----
+****
+
+== Questions
+Q1. Assume in each of the following cases that the initial set of process user IDs is
+real=1000 effective=0 saved=0 file-system=0. What would be the state of the user IDs
+after the following calls?
+
+.Answer 1
+|===
+|Command|real |effective |saved |file-system
+
+| setuid(2000)
+| 2000| 2000| 2000| 2000
+
+| setreuid(–1, 2000)
+| 1000 | 2000 | 2000 | 2000
+
+| seteuid(2000)
+| 1000 | 2000 | 2000 | 0
+
+| setfsuid(2000)
+| 1000 | 0 | 0 | 2000
+
+| setresuid(–1, 2000, 3000)
+| 1000 | 2000 | 3000 | 3000
+|===
+
+Q2. Is a process with the following user IDs privileged? Explain your answer. (real=0 effective=1000 saved=1000 file-system=1000)
+
+.Answer 2
+* No. The effective ID determines the privilege level of any process.
+
+Q3.
