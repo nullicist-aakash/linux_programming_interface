@@ -7,6 +7,8 @@
 passwd* my_getpwnam(const char* name) {
     passwd *pwd;
 
+    setpwent();
+
     while ((pwd = getpwent()) != nullptr) {
         if (strcmp(pwd->pw_name, name) == 0) {
             endpwent();

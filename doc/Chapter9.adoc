@@ -1,0 +1,41 @@
+= Chapter 9: Process Credentials
+Aakash Gupta <uchanahome8@gmail.com>
+:toc:
+
+== 9.1 Real User ID and Real Group ID
+* The real user ID and group ID identify the user and group to which the process belongs.
+* As part of the login process, a login shell gets its real user and group IDs from the third and fourth fields of the user’s password record in the `/etc/passwd` file
+(Section 8.1).
+* When a new process is created (e.g., when the shell executes a program), it inherits these identifiers from its parent.
+
+== 9.2 Effective User ID and Effective Group ID
+* On most UNIX implementations, the effective user ID and group ID, in conjunction with the supplementary group IDs, are used to determine the permissions granted to a process when it tries to perform various operations (i.e., system calls).
+** Linux is a little different, as explained in Section 9.5
+** For example, these identifiers determine the permissions granted to a process when it accesses resources such as files and System V interprocess communication (IPC) objects, which themselves have associated user and group IDs determining to whom they belong.
+* As we’ll see in Section 20.5, the effective user ID is also used by the kernel to determine whether one process can send a signal to another.
+* A process whose effective user ID is 0 (the user ID of root) has all of the privileges of the superuser. Such a process is referred to as a privileged process.
+* Normally, the effective user and group IDs have the same values as the corresponding real IDs, but there are *two ways in which the effective IDs can assume different values*:
+** One way is through the use of system calls that we discuss in Section 9.7.
+** The second way is through the execution of set-user-ID and set-group-ID programs.
+
+== 9.3 Set-User-ID and Set-Group-ID Programs
+* A set-user-ID program allows a process to gain privileges it would not normally have, by setting the process’s effective user ID to the same value as the user ID (owner) of the executable file.
+* Like any other file, an executable program file has an associated user ID and group ID that define the ownership of the file.
+** In addition, an executable file has two special permission bits: the set-user-ID and set-group-ID bits.
+** These permission bits are set using the `chmod` command.
+* The set-user-ID and set-group-ID permission bits don’t have any effect for shell scripts on Linux.
+
+****
+[source,bash]
+----
+$ su
+Password:
+
+# ls -l prog
+-rwxr-xr-x 1 root root 302585 Jun 26 15:05 prog
+
+# chmod u+s prog                  # Turn on set-user-ID permission bit
+
+# chmod g+s prog                  # Turn on set-group-ID permission bit
+----
+****

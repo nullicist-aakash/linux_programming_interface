@@ -9,4 +9,5 @@ This page is the index for the documentation of my learning summaries from the b
 * xref:Chapter6.adoc[Chapter 6: Processes].
 * xref:Chapter7.adoc[Chapter 7: Memory Allocation].
 * xref:Chapter8.adoc[Chapter 8: Users and Groups].
+* xref:Chapter9.adoc[Chapter 9: Process Credentials].
 
